@@ -13,7 +13,10 @@ from math import ceil
 import argparse
 from matplotlib.cm import get_cmap
 import console
+import soundfile as sf
+import os
 
+output="output/deep-vocal-isolation/"
 
 def load_audio_file(file_path):
     audio, sample_rate = librosa.load(file_path)
@@ -21,8 +24,10 @@ def load_audio_file(file_path):
 
 
 def save_audio_file(audio_file, file_path, sample_rate):
-    librosa.output.write_wav(file_path, audio_file, sample_rate, norm=False)
-    console.info("Wrote audio file to", file_path)
+    if not os.path.exists(os.path.dirname(file_path)):
+        os.makedirs(os.path.dirname(file_path))
+    sf.write(file_path, audio_file, sample_rate, format='wav')
+    console.info("Wrote audio file to", output+os.path.basename(file_path))
 
 
 def expand_to_grid(spectrogram, grid_size, channels):

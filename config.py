@@ -27,7 +27,9 @@ class Config(object):
         # First epoch number.
         self.start_epoch = self.get_int("START_EPOCH", 0)
         # h5 file to read/write weights to
-        self.weights = self.get("WEIGHTS", "weights.h5")
+        #self.weights = self.get("WEIGHTS", "weights.h5")
+        self.weights = self.get("WEIGHTS", "weights_ri.hdf5")
+        
         # Batch size for training
         self.batch = self.get_int("BATCH", 8)
         # directory to store tensorboard log files

@@ -36,6 +36,40 @@ from chopper import Chopper
 from normalizer import Normalizer
 from batch import Batch
 
+ANALYSIS_PATH="./analysis"
+BATCH="8"
+BATCH_GENERATOR="random"
+CHECKPOINTS="tensorboard,weights"
+CHOPNAME="tile"
+CHOPPARAMS="{'scale': 128, 'step': 64, 'slices':256, 'upper':False, 'filter':'maximum'}"
+DATA="../bot_data"
+EARLY_STOPPING="{'min_delta': 0.001, 'patience': 3}"
+EPOCHS="10"
+EPOCH_STEPS="50000"
+FFT="1536"
+INFERENCE_SLICE="3500"
+INSTRUMENTAL="False"
+LOAD="False"
+LOG_BASE="./logs"
+LOSS="mean_squared_error"
+METRICS="mean_pred,max_pred"
+MODEL="leaky_dropout"
+MODEL_PARAMS="{'alpha1': 0.1,'alpha2': 0.01,'rate': 0.1}"
+NORMALIZER="percentile"
+NORMALIZER_PARAMS="{'percentile': 99}"
+OPTIMIZER="adam"
+OPTIMIZER_PARAMS=""
+PHASE_ITERATIONS="10"
+LEARN_PHASE="False"
+QUIT="True"
+SPLIT="0.9"
+START_EPOCH="0"
+TENSORBOARD="./tensorboard"
+TENSORBOARD_INFO="default"
+WEIGHTS="/weights/weights_lps.hdf5"
+
+
+output_path="vocal-isolation/output/deep-vocal-isolation"
 
 class VocalIsolation:
     def __init__(self, config):
@@ -144,7 +178,8 @@ class VocalIsolation:
     def load_weights(self, path):
         if not os.path.isabs(path):
             path = os.path.join(self.config.logs, path)
-        self.model.load_weights(path)
+        rel_path = os.path.dirname(os.path.relpath(__file__))
+        self.model.load_weights(os.path.join(rel_path, "weights", "weights_ri.hdf5")) #path
 
     def process_spectrogram(self, spectrogram, channels=1):
         chopper = Chopper()
@@ -193,6 +228,7 @@ class VocalIsolation:
             learn_phase=self.config.learn_phase)
         console.log("Retrieved spectrogram; processing...")
 
+        #The inference is performed in the spectogram. This following line creates the vocal isolation
         info = self.process_spectrogram(spectrogram, channels)
         spectrogram, new_spectrogram = info
 
@@ -202,48 +238,59 @@ class VocalIsolation:
         path_parts = os.path.split(path)
         filename_parts = os.path.splitext(path_parts[1])
 
-        conversion.save_spectrogram(spectrogram, os.path.join(
-            path_parts[0], filename_parts[0]) + ".png")
+        #conversion.save_spectrogram(spectrogram, os.path.join(
+        #    output_path, filename_parts[0]) + ".png") #path_parts[0]
+        #SEEMS TO BE SLOW. Maybe just bypass that.
 
         # save network output
         self.save_audio(new_spectrogram,
                         fft_window_size,
                         phase_iterations,
                         sample_rate,
-                        path,
+                        output_path+"/"+filename_parts[0], #path_parts[1]
+                        filename="vocals",
                         vocal=not self.config.instrumental,
                         learn_phase=learn_phase)
 
-        # save difference
+        """
+        # save difference (instrumental)
         self.save_audio(spectrogram - new_spectrogram,
                         fft_window_size,
                         phase_iterations,
                         sample_rate,
-                        path,
+                        output_path+path_parts[1],
                         vocal=self.config.instrumental,
                         learn_phase=learn_phase)
-
+        """
         console.log("Vocal isolation complete")
 
     def save_audio(self, spectrogram, fft_window_size,
                    phase_iterations, sample_rate,
-                   path, vocal=True, learn_phase=False):
+                   path, vocal=True, learn_phase=False, filename=''):
         part = "_vocal" if vocal else "_instrumental"
+        
         new_audio = conversion.spectrogram_to_audio_file(
                 spectrogram,
                 fft_window_size=fft_window_size,
                 phase_iterations=phase_iterations,
                 learn_phase=learn_phase)
+       
         path_parts = os.path.split(path)
-        filename_parts = os.path.splitext(path_parts[1])
-        output_filename_base = os.path.join(
-            path_parts[0], filename_parts[0] + part)
+        
+
+        if filename != '':
+            output_filename_base = os.path.join( path_parts[0], filename)
+        else:
+            filename_parts = os.path.splitext(path_parts[1])
+            output_filename_base = os.path.join( path_parts[0], filename_parts[0] + part)
+        
+        
         console.log("Converted to audio; writing to",
                     output_filename_base + ".wav")
 
         conversion.save_audio_file(
             new_audio, output_filename_base + ".wav", sample_rate)
-        conversion.save_spectrogram(spectrogram, output_filename_base + ".png")
+        #conversion.save_spectrogram(spectrogram, output_filename_base + ".png")
 
 
 def get_signal_handler(vocal_isolation):
