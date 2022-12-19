@@ -69,7 +69,7 @@ TENSORBOARD_INFO="default"
 WEIGHTS="/weights/weights_lps.hdf5"
 
 
-output_path="vocal-isolation/output/deep-vocal-isolation"
+output_path="vocal_isolation/output/deep-vocal-isolation"
 
 class VocalIsolation:
     def __init__(self, config):
