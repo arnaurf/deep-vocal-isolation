@@ -269,6 +269,7 @@ class VocalIsolation:
                    path, vocal=True, learn_phase=False, filename=''):
         part = "_vocal" if vocal else "_instrumental"
         
+        #a
         new_audio = conversion.spectrogram_to_audio_file(
                 spectrogram,
                 fft_window_size=fft_window_size,
